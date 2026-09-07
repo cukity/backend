@@ -1,61 +1,65 @@
-const form = document.getElementById('form');
-const authorInput = document.getElementById('author');
-const messageInput = document.getElementById('message');
 const list = document.getElementById('entries');
+const form = document.getElementById('form');
+const author = document.getElementById('author');
+const message = document.getElementById('message');
+const errorEl = document.getElementById('error');
+const emptyEl = document.getElementById('empty');
+
+function entryEl(e) {
+  const li = document.createElement('li');
+
+  const head = document.createElement('div');
+  head.className = 'head';
+
+  const name = document.createElement('strong');
+  name.textContent = e.author;
+
+  const when = document.createElement('time');
+  if (e.created_at) when.textContent = new Date(e.created_at).toLocaleString();
+
+  const del = document.createElement('button');
+  del.textContent = 'Delete';
+  del.onclick = async () => {
+    if (!confirm('Delete this entry?')) return;
+    await fetch('/api/entries/' + e.id, { method: 'DELETE' });
+    load();
+  };
+
+  head.append(name, when, del);
+
+  const p = document.createElement('p');
+  p.textContent = e.message;
+
+  li.append(head, p);
+  return li;
+}
 
 async function load() {
   const res = await fetch('/api/entries');
   const entries = await res.json();
-  list.replaceChildren();
-  if (!entries.length) {
-    const li = document.createElement('li');
-    li.className = 'empty';
-    li.textContent = 'No entries yet — be the first to sign!';
-    list.append(li);
-    return;
-  }
-  for (const entry of entries) {
-    const li = document.createElement('li');
-
-    const head = document.createElement('div');
-    head.className = 'head';
-    const name = document.createElement('strong');
-    name.textContent = entry.author;
-    const time = document.createElement('time');
-    time.textContent = new Date(entry.created_at).toLocaleString();
-    const del = document.createElement('button');
-    del.className = 'delete';
-    del.textContent = 'Delete';
-    del.addEventListener('click', () => remove(entry.id));
-    head.append(name, time, del);
-
-    const message = document.createElement('p');
-    message.textContent = entry.message;
-
-    li.append(head, message);
-    list.append(li);
-  }
+  list.replaceChildren(...entries.map(entryEl));
+  emptyEl.hidden = entries.length > 0;
 }
 
-async function remove(id) {
-  await fetch('/api/entries/' + id, { method: 'DELETE' });
-  load();
-}
+form.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  errorEl.hidden = true;
 
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
   const res = await fetch('/api/entries', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ author: authorInput.value, message: messageInput.value }),
+    body: JSON.stringify({ author: author.value, message: message.value }),
   });
-  if (res.ok) {
-    form.reset();
-    load();
-  } else {
+
+  if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    alert(data.error || 'Could not save your entry.');
+    errorEl.textContent = data.error || 'Something went wrong.';
+    errorEl.hidden = false;
+    return;
   }
+
+  form.reset();
+  load();
 });
 
 load();
