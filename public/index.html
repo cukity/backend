@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guestbook</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <h1>Guestbook</h1>
+    <form id="form">
+      <input id="author" placeholder="Your name" maxlength="80" required autocomplete="off">
+      <textarea id="message" placeholder="Leave a message&hellip;" maxlength="2000" rows="3" required></textarea>
+      <button type="submit">Sign guestbook</button>
+    </form>
+    <ul id="entries"></ul>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
